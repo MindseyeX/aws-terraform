@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "Region for the state bucket. Keep it the same as your environments."
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "project" {
