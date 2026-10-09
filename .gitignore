@@ -19,3 +19,19 @@ override.tf.json
 
 # Keep the lock file - it pins provider versions for reproducible builds
 !.terraform.lock.hcl
+
+# Secrets - pass with -var-file, never commit
+*.secret.tfvars
+.env
+*.pem
+*.key
+
+# Terraform CLI config (can contain API tokens)
+.terraformrc
+terraform.rc
+
+# Editor / OS clutter
+.vscode/
+.idea/
+*.swp
+.DS_Store
