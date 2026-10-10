@@ -1,5 +1,7 @@
 # AWS Terraform Lab
 
+![terraform](https://github.com/MindseyeX/aws-terraform/actions/workflows/terraform.yml/badge.svg)
+
 Modular Terraform that builds a highly available AWS environment from scratch: a multi-AZ VPC, an Auto Scaling Linux web tier behind a load balancer, and supporting services. Built to be destroyed and rebuilt on demand.
 
 ## Architecture (Phase 1)
