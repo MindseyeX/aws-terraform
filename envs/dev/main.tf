@@ -27,11 +27,20 @@ module "network" {
   single_nat_gateway = var.single_nat_gateway
 }
 
-# --- Phase 2: compute (coming next) -------------------------------------------
-# module "compute" {
-#   source             = "../../modules/compute"
-#   name               = local.name
-#   vpc_id             = module.network.vpc_id
-#   public_subnet_ids  = module.network.public_subnet_ids
-#   private_subnet_ids = module.network.private_subnet_ids
-# }
+# --- Phase 2: compute -----------------------------------------------------------
+# Outputs of one module become inputs of the next - this is how Terraform
+# knows to build the network before the servers that live in it.
+
+module "compute" {
+  source = "../../modules/compute"
+
+  name        = local.name
+  environment = var.environment
+  vpc_id      = module.network.vpc_id
+  subnet_ids  = module.network.private_subnet_ids
+
+  instance_type    = var.instance_type
+  min_size         = var.asg_min_size
+  max_size         = var.asg_max_size
+  desired_capacity = var.asg_desired_capacity
+}

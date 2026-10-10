@@ -32,3 +32,23 @@ variable "single_nat_gateway" {
   description = "Use one shared NAT gateway instead of one per AZ."
   type        = bool
 }
+
+variable "instance_type" {
+  description = "EC2 instance type for the web servers."
+  type        = string
+}
+
+variable "asg_min_size" {
+  description = "Minimum number of web servers."
+  type        = number
+}
+
+variable "asg_max_size" {
+  description = "Maximum number of web servers."
+  type        = number
+}
+
+variable "asg_desired_capacity" {
+  description = "Number of web servers to run."
+  type        = number
+}
