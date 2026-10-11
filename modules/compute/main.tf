@@ -141,6 +141,8 @@ resource "aws_launch_template" "web" {
 # --- Auto Scaling Group ---------------------------------------------------------
 
 resource "aws_autoscaling_group" "web" {
+  depends_on = [time_sleep.wait_for_iam]
+
   name                = "${var.name}-web-asg"
   vpc_zone_identifier = var.subnet_ids
   min_size            = var.min_size
@@ -183,4 +185,17 @@ resource "aws_autoscaling_group" "web" {
       propagate_at_launch = false
     }
   }
+}
+
+# --- IAM propagation delay ------------------------------------------------------
+# IAM is eventually consistent: a brand-new instance profile can take several
+# seconds to become usable by EC2. Without this pause the ASG's first launches
+# can fail with "Authentication Failure" on a fresh build.
+resource "time_sleep" "wait_for_iam" {
+  create_duration = "20s"
+
+  depends_on = [
+    aws_iam_instance_profile.web,
+    aws_iam_role_policy_attachment.ssm_core,
+  ]
 }
