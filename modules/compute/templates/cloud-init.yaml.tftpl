@@ -1,0 +1,62 @@
+#cloud-config
+# Rendered by Terraform's templatefile(). Terraform variables: name, environment.
+# The shell script below deliberately writes variables as $VAR, not with
+# curly braces, because templatefile() would try to interpolate those itself.
+
+package_update: true
+packages:
+  - nginx
+
+write_files:
+  # The stock Amazon Linux nginx.conf includes /etc/nginx/default.d/*.conf
+  # inside its default port-80 server, so dropping a file here adds a route
+  # without editing nginx.conf.
+  - path: /etc/nginx/default.d/healthz.conf
+    permissions: "0644"
+    content: |
+      # Lightweight health endpoint for the Phase 3 load balancer.
+      location = /healthz {
+        default_type text/plain;
+        return 200 "ok\n";
+      }
+
+  - path: /usr/local/bin/render-index.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Build a status page from instance metadata (IMDSv2: get a token first).
+      set -euo pipefail
+      TOKEN=$(curl -sS -X PUT "http://169.254.169.254/latest/api/token" \
+        -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
+      md() {
+        curl -sS -H "X-aws-ec2-metadata-token: $TOKEN" \
+          "http://169.254.169.254/latest/meta-data/$1"
+      }
+      INSTANCE_ID=$(md instance-id)
+      AZ=$(md placement/availability-zone)
+      PRIVATE_IP=$(md local-ipv4)
+      INSTANCE_TYPE=$(md instance-type)
+      OS=$(. /etc/os-release && echo "$PRETTY_NAME")
+
+      cat > /usr/share/nginx/html/index.html <<HTML
+      <!doctype html>
+      <html>
+      <head><meta charset="utf-8"><title>${name}</title></head>
+      <body style="font-family: sans-serif; max-width: 40rem; margin: 3rem auto;">
+        <h1>${name}</h1>
+        <p>Deployed with Terraform, configured by cloud-init.</p>
+        <table cellpadding="6">
+          <tr><td>Environment</td><td><b>${environment}</b></td></tr>
+          <tr><td>Instance</td><td>$INSTANCE_ID ($INSTANCE_TYPE)</td></tr>
+          <tr><td>Availability Zone</td><td>$AZ</td></tr>
+          <tr><td>Private IP</td><td>$PRIVATE_IP</td></tr>
+          <tr><td>OS</td><td>$OS</td></tr>
+        </table>
+      </body>
+      </html>
+      HTML
+
+runcmd:
+  - /usr/local/bin/render-index.sh
+  - nginx -t
+  - systemctl enable --now nginx
