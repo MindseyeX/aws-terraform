@@ -37,7 +37,7 @@ envs/dev/           Root module for the dev environment
 
 ## Deploy
 
-Requirements: Terraform >= 1.11 and AWS credentials for your sandbox (`aws sts get-caller-identity` should work).
+Requirements: Terraform >= 1.11 and AWS credentials(`aws sts get-caller-identity` should work).
 
 ```bash
 # 1. Create the state bucket (also writes envs/dev/backend.hcl)
