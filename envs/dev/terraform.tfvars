@@ -1,3 +1,4 @@
+# customize to yoru desired region / AZ
 aws_region  = "us-east-2"
 project     = "tflab"
 environment = "dev"
