@@ -77,5 +77,5 @@ cd ../../bootstrap && terraform destroy
 
 - [x] Phase 1: networking (VPC, subnets, NAT, routing) and remote state
 - [x] Phase 2: compute module (launch template, ASG, AL2023, cloud-init, SSM access)
-- [ ] Phase 3: ALB, S3, RDS, CloudWatch alarms + SNS
-- [ ] Phase 4: prod environment, VPC flow logs, Ansible configuration, CI plan via OIDC
+- [x] Phase 3: Application Load Balancer (target group, `/healthz` health checks, SG-to-SG rules) and CPU target-tracking auto scaling with rolling instance refresh
+- [ ] Phase 4: Ansible over SSM (dynamic inventory, CIS-style hardening, compliance check)
