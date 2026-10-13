@@ -73,29 +73,6 @@ cd envs/dev  && terraform destroy
 cd ../../bootstrap && terraform destroy
 ```
 
-## Design decisions
-
-### Network
-- **`for_each` keyed by AZ name, not `count`.** Removing an AZ deletes only that AZ's subnets. With `count`, removing an item in the middle shifts indexes and recreates everything after it.
-- **Subnet CIDRs calculated with `cidrsubnet()`.** Changing `vpc_cidr` re-derives every subnet; there are no hardcoded ranges to keep in sync.
-- **No public IPs by default.** `map_public_ip_on_launch = false`; only the ALB and NAT face the internet.
-- **Default security group locked down.** The VPC's default SG has all rules removed, so nothing can be launched into it by accident (CIS AWS benchmark).
-- **Single vs per-AZ NAT is one variable.** `single_nat_gateway = true` keeps dev cheap. Setting it to `false` gives each AZ its own NAT so an AZ outage doesn't cut egress for the others. The private route tables are already per-AZ, so the switch changes routes only.
-
-### Compute
-- **SSM Session Manager instead of SSH.** The web security group has *zero* inbound rules. The SSM agent makes an outbound connection, so there are no keys to manage, no port 22, no bastion host, and every session is logged by AWS.
-- **AMI from AWS's public SSM parameter**, not a hardcoded ID. New launches always get the latest patched Amazon Linux 2023 image.
-- **IMDSv2 required.** The instance metadata service only answers requests carrying a session token, which blocks the SSRF-style credential theft IMDSv1 allowed.
-- **Encrypted gp3 root volumes**, defined in the launch template.
-- **cloud-init via `templatefile()`.** Server configuration is code, versioned alongside the infrastructure. Changing it rolls out automatically (next point).
-- **Rolling instance refresh.** When the launch template changes, the ASG replaces instances gradually while keeping at least 50% healthy, instead of all at once.
-- **Default tags reach instances.** Provider `default_tags` don't propagate to ASG-launched instances, so the module reads them with `data.aws_default_tags` and copies them into the launch template's `tag_specifications`.
-- **Least-privilege IAM.** Instances get exactly one AWS-managed policy, `AmazonSSMManagedInstanceCore`.
-
-### State
-- **Remote state in S3 with native locking.** `use_lockfile = true` uses S3 conditional writes for locking (Terraform 1.11+), so no DynamoDB table is needed. The bucket is versioned, encrypted, private, and TLS-only.
-- **Partial backend config.** Sandbox account IDs change between sessions, so the bucket name lives in a generated `backend.hcl` rather than in code.
-
 ## Roadmap
 
 - [x] Phase 1: networking (VPC, subnets, NAT, routing) and remote state
